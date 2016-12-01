@@ -58,6 +58,44 @@ function post_message(roomid, message)
 
 }
 
+function setSetting(token,deviceid,data) {
+   return new Promise(function(resolve,reject) {
+     var url  = "https://api.relayr.io/devices/"+deviceId+"/data"
+     var stringData = JSON.stringify(data)
+     request(
+        {
+            method: 'POST'
+            , headers: { 'Content-Type': 'application/json','Cache-Control': 'no-cache'}
+            , uri: url
+            , body : stringData
+            , 'auth': {'bearer': relayr_token }
+        }
+        , function (error, response, body) {
+            if(error) {
+                reject(error)
+            }
+            else if (response.statusCode == 200) {
+                try {
+                    resolve(body)
+                }
+                catch (e)
+                {
+                    reject(e)
+                }
+            } else {
+                try {
+                    resolve(body)
+                }
+                catch(e)
+                {
+                    reject(e)
+                }
+            }
+
+        })
+  })
+}
+
 function getReading(token,deviceId) {
   return new Promise(function(resolve,reject) {
      var url  = "https://api.relayr.io/devices/"+deviceId+"/readings"
@@ -95,6 +133,10 @@ function getReading(token,deviceId) {
 }
 var app = express()
 app.use(bodyParser.json());
+
+app.get('/ping',function(req,res) {
+  res.send('pong')
+})
 
 app.post('/relayr_event', function (req, res) {
   res.send('ok')
@@ -164,6 +206,10 @@ app.post('/relayr_event', function (req, res) {
                 if (err)
                   console.error("got an error:" + err);
                 else {
+                  setSetting(relayr_token,deviceId,{"meaning": "collabSession","value": false})
+		  .then(function(response) {
+                  	console.log("Response is: "+response)
+  		   })
                   console.log("deleted the room");
                 }
                })
@@ -205,6 +251,6 @@ app.post('/relayr_event', function (req, res) {
    }
 
  })
-app.listen(3000, function () {
-  console.log('relayr app listening on port 3000!')
+app.listen(80, '0.0.0.0', function () {
+  console.log('relayr app listening on port 80!')
 })
